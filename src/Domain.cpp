@@ -11,7 +11,8 @@ Domain::Domain(const std::string& filename) {
 
     std::ifstream inFile;
     inFile.open(filename, std::ios_base::in);
-    if(!inFile) exit(-1);
+    if(!inFile)
+        exit(-1);
 
     inFile >> function;
     inFile >> dimensions;
@@ -31,11 +32,4 @@ Domain::Domain(const std::string& filename) {
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     engine.seed(rank);
-}
-
-std::string Domain::exactSolutionToString() {
-    std::string s = std::to_string(exactSolution.at(0));
-    for (int i = 1; i < dimensions; ++i)
-        s.append(std::to_string(exactSolution.at(i)));
-    return s;
 }

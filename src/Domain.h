@@ -14,19 +14,19 @@ public:
     explicit Domain(const std::string& filename);
     ~Domain() = default;
 
-    std::string getFunction() { return this->function; }
-    int getDimensions() const{ return this->dimensions; }
+    static std::string getFunction() { return Domain::function; }
+    static int getDimensions() { return Domain::dimensions; }
     double lowerBound() const{ return this->bounds.first; }
     double upperBound() const{ return this->bounds.second; }
-
-    std::string exactSolutionToString();
+    std::vector<double> getExactSolution() { return this->exactSolution; }
 
 private:
-    std::string function;
-    int dimensions{};
+    static std::string function;
+    static int dimensions;
     std::pair<double, double> bounds;
     std::mt19937 engine;
     std::vector<double> exactSolution;
+
 };
 
 
