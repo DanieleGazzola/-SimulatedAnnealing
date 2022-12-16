@@ -35,5 +35,17 @@ Domain::Domain(const std::string& filename) {
 
 std::vector<double> Domain::generateNeighborhood(std::vector<double> centre) {
 
+    std::uniform_real_distribution<double> maxStep(-0.1, 0.1);
+    double move;
+
+    for (int i = 0; i < dimensions; ++i){
+        move = maxStep(engine);
+        if(centre.at(i) + move > upperBound() || centre.at(i) + move < lowerBound()){
+            i--;
+        } else {
+            centre.at(i) += move;
+        }
+    }
+
     return centre;
 }
