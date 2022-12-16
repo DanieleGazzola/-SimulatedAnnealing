@@ -14,18 +14,19 @@ public:
     explicit Domain(const std::string& filename);
     ~Domain() = default;
 
-    static std::string getFunction() { return Domain::function; }
-    static int getDimensions() { return Domain::dimensions; }
+    std::string getFunction() { return this->function; }
+    int getDimensions() const{ return this->dimensions; }
     double lowerBound() const{ return this->bounds.first; }
     double upperBound() const{ return this->bounds.second; }
-    std::vector<double> getExactSolution() { return this->exactSolution; }
+    double random(std::uniform_real_distribution<double> dis) { return dis(engine); }
+
+    std::vector<double> generateNeighborhood(std::vector<double>);
 
 private:
-    static std::string function;
-    static int dimensions;
+    std::string function;
+    int dimensions{};
     std::pair<double, double> bounds;
     std::mt19937 engine;
-    std::vector<double> exactSolution;
 
 };
 
