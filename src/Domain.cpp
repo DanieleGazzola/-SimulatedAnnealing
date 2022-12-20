@@ -67,11 +67,14 @@ std::vector<double> Domain::generateNeighborhood(std::vector<double> centre, dou
 
         for (int i = 0; i < dimensions; ++i) {
             moves.at(i) = maxStep(engine);
-            if(centre.at(i) + moves.at(i) > upperBound(i) || centre.at(i) + moves.at(i) < lowerBound(i)){
-                i--;
-            } else {
-                dist += moves.at(i) * moves.at(i);
+
+            if(centre.at(i) + moves.at(i) > upperBound(i)){
+                moves.at(i) = upperBound(i) - centre.at(i);
+            } else if(centre.at(i) + moves.at(i) < lowerBound(i)){
+                moves.at(i) = lowerBound(i) - centre.at(i);
             }
+
+            dist += moves.at(i) * moves.at(i);
         }
 
         if(dist <= radius * radius)
