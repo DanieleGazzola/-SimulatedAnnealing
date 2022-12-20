@@ -16,16 +16,16 @@ public:
 
     std::string getFunction() { return this->function; }
     int getDimensions() const{ return this->dimensions; }
-    double lowerBound() const{ return this->bounds.first; }
-    double upperBound() const{ return this->bounds.second; }
-    double random(std::uniform_real_distribution<double> dis) { return dis(engine); }
+    double lowerBound(int i) const{ return this->bounds.at(i).first; }
+    double upperBound(int i) const{ return this->bounds.at(i).second; }
+    double randomUnitary();
 
-    std::vector<double> generateNeighborhood(std::vector<double>);
+    std::vector<double> generateNeighborhood(std::vector<double>, double);
 
 private:
     std::string function;
     int dimensions{};
-    std::pair<double, double> bounds;
+    std::vector<std::pair<double, double>> bounds;
     std::mt19937 engine;
 
 };

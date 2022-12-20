@@ -3,7 +3,6 @@
 //
 
 #include <iostream>
-#include <string>
 #include <chrono>
 #include <mpi.h>
 #include "Domain.h"
@@ -39,6 +38,8 @@ int main(int argc, char** argv){
         for (int i = 0; i < domain.getDimensions(); ++i)
             std::cout << SA.getSolution().at(i) << " ";
         std::cout << std::endl;
+
+        std::cout << "F(x) = " << SA.getFSolution() << std::endl;
 
         std::cout << "Elapsed time: " << elapsed_seconds.count() << " s" << std::endl;
     }

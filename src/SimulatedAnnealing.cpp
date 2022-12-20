@@ -5,6 +5,9 @@
 #include <vector>
 #include <cmath>
 #include <random>
+#include <mpi.h>
+#include <iostream>
+#include <chrono>
 #include "Domain.h"
 #include "muParser.h"
 
@@ -15,13 +18,21 @@ public:
 
     void simulatedAnnealing(Domain domain){
 
+        int rank, size;
+        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+        MPI_Comm_size(MPI_COMM_WORLD, &size);
+
         solution.reserve(domain.getDimensions());
         solution.resize(domain.getDimensions());
         for (int i = 0; i < domain.getDimensions(); ++i)
-            solution.at(i) = 0.;
+            solution.at(i) = (domain.upperBound(i) - domain.lowerBound(i)) / 2 + domain.lowerBound(i);
 
         mu::Parser parser;
+
         parser.SetExpr(domain.getFunction());
+
+        double PI = M_PI;
+        parser.DefineVar("pi", &PI);
 
         for (int i = 0; i < domain.getDimensions(); ++i) {
             std::string arg = "x";
@@ -31,21 +42,23 @@ public:
 
         fSolution = parser.Eval();
 
+        //da far diventare parametri
         double c = 0.99;
         int L = 1000;
-        double alpha = 0.9;
+        double alpha = 0.95;
+        double toll = 0.001;
+
+        double radius = (domain.upperBound(0) - domain.lowerBound(0)) / 5.;
 
         std::vector<double> newPoint;
         double fNew;
         newPoint.reserve(domain.getDimensions());
         newPoint.resize(domain.getDimensions());
 
-        std::uniform_real_distribution<double> unitary(0, 1);
-
         do{
             for (int i = 0; i < L; ++i) {
 
-                newPoint = domain.generateNeighborhood(solution);
+                newPoint = domain.generateNeighborhood(solution, radius);
 
                 for (int j = 0; j < domain.getDimensions(); ++j) {
                     std::string arg = "x";
@@ -55,7 +68,7 @@ public:
 
                 fNew = parser.Eval();
 
-                if(fNew < fSolution || std::exp((fSolution - fNew) / c) > domain.random(unitary)){
+                if(fNew < fSolution || std::exp((fSolution - fNew) / c) > domain.randomUnitary()){
                     solution = newPoint;
                     fSolution = fNew;
                 }
@@ -64,11 +77,31 @@ public:
 
             c = c * alpha;
 
-        } while (c > 0.01);
+        } while (c > toll);
+
+        if(rank == 0){
+            std::vector<double> tempSol;
+            tempSol.reserve(domain.getDimensions());
+            tempSol.resize(domain.getDimensions());
+            double tempFSol;
+
+            for (int i = 1; i < size; ++i) {
+                MPI_Recv(&tempSol[0], domain.getDimensions(), MPI_DOUBLE, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                MPI_Recv(&tempFSol, 1, MPI_DOUBLE, i, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                if(tempFSol < fSolution){
+                    solution = tempSol;
+                    fSolution = tempFSol;
+                }
+            }
+        } else {
+            MPI_Send(&solution[0], domain.getDimensions(), MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
+            MPI_Send(&fSolution, 1, MPI_DOUBLE, 0, 1, MPI_COMM_WORLD);
+        }
 
     }
 
     std::vector<double> getSolution() { return this->solution; }
+    double getFSolution() const{return this->fSolution; }
 
 private:
     std::vector<double> solution;

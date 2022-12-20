@@ -17,35 +17,76 @@ Domain::Domain(const std::string& filename) {
 
     inFile >> function;
     inFile >> dimensions;
-    inFile >> bounds.first;
-    inFile >> bounds.second;
 
-    if(bounds.first == bounds.second)
-        std::exit(-1);
+    bounds.reserve(dimensions);
+    bounds.resize(dimensions);
 
-    if(bounds.first > bounds.second)
-        std::swap(bounds.first, bounds.second);
+    for (int i = 0; i < dimensions; ++i) {
+        inFile >> bounds.at(i).first;
+        inFile >> bounds.at(i).second;
+
+        if(bounds.at(i).first == bounds.at(i).second)
+            std::exit(-1);
+
+        if(bounds.at(i).first > bounds.at(i).second)
+            std::swap(bounds.at(i).first, bounds.at(i).second);
+    }
 
     inFile.close();
 
-    int rank;
+    int rank, size;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
     engine.seed(rank);
-}
 
-std::vector<double> Domain::generateNeighborhood(std::vector<double> centre) {
+    double partialSize0 = (bounds.at(0).second - bounds.at(0).first) / (size / 2.);
+    double partialSize1 = (bounds.at(1).second - bounds.at(1).first) / 2.;
 
-    std::uniform_real_distribution<double> maxStep(-0.1, 0.1);
-    double move;
+    bounds.at(0).first = bounds.at(0).first + (rank % (size / 2)) * partialSize0;
+    bounds.at(0).second = bounds.at(0).first + partialSize0;
 
-    for (int i = 0; i < dimensions; ++i){
-        move = maxStep(engine);
-        if(centre.at(i) + move > upperBound() || centre.at(i) + move < lowerBound()){
-            i--;
-        } else {
-            centre.at(i) += move;
-        }
+    if(dimensions == 2){
+        bounds.at(1).first = bounds.at(1).first + ((rank < (size / 2)) ? 0 : 1) * partialSize1;
+        bounds.at(1).second = bounds.at(1).first + partialSize1;
     }
 
+}
+
+std::vector<double> Domain::generateNeighborhood(std::vector<double> centre, double radius) {
+
+    std::uniform_real_distribution<double> maxStep(-radius, radius);
+    std::vector<double> moves;
+    double dist;
+    bool check = true;
+
+    moves.reserve(dimensions);
+    moves.resize(dimensions);
+
+    do{
+        dist = 0.;
+
+        for (int i = 0; i < dimensions; ++i) {
+            moves.at(i) = maxStep(engine);
+            if(centre.at(i) + moves.at(i) > upperBound(i) || centre.at(i) + moves.at(i) < lowerBound(i)){
+                i--;
+            } else {
+                dist += moves.at(i) * moves.at(i);
+            }
+        }
+
+        if(dist <= radius * radius)
+            check = false;
+
+    } while(check);
+
+    for (int i = 0; i < dimensions; ++i)
+        centre.at(i) += moves.at(i);
+
     return centre;
+}
+
+double Domain::randomUnitary() {
+    std::uniform_real_distribution<double> unitary(0., 1.);
+
+    return unitary(engine);
 }
