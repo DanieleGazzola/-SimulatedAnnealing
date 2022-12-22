@@ -5,6 +5,7 @@
 #include <iostream>
 #include <chrono>
 #include <mpi.h>
+#include "omp.h"
 #include "Domain.h"
 #include "Domain.cpp"
 #include "SimulatedAnnealing.cpp"
@@ -24,24 +25,29 @@ int main(int argc, char** argv){
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    Domain domain(argv[1]);
-    SimulatedAnnealing SA;
+    //for tests only
+    #pragma omp parallel for
+    for (int i = 0; i < 10; ++i) {
+        Domain domain(argv[1]);
+        SimulatedAnnealing SA;
 
-    auto start = std::chrono::system_clock::now();
-    SA.simulatedAnnealing(domain);
-    auto end = std::chrono::system_clock::now();
+        auto start = std::chrono::system_clock::now();
+        SA.simulatedAnnealing(domain);
+        auto end = std::chrono::system_clock::now();
 
-    std::chrono::duration<double> elapsed_seconds = end-start;
+        std::chrono::duration<double> elapsed_seconds = end-start;
 
-    if(rank == 0){
-        std::cout << "Point found: ";
-        for (int i = 0; i < domain.getDimensions(); ++i)
-            std::cout << SA.getSolution().at(i) << " ";
-        std::cout << std::endl;
+        if(rank == 0){
+            std::cout << "Iteration: " << i << std::endl;
+            std::cout << "Point found: ";
+            for (int j = 0; j < domain.getDimensions(); ++j)
+                std::cout << SA.getSolution().at(j) << " ";
+            std::cout << std::endl;
 
-        std::cout << "F(x) = " << SA.getFSolution() << std::endl;
+            std::cout << "F(x) = " << SA.getFSolution() << std::endl;
 
-        std::cout << "Elapsed time: " << elapsed_seconds.count() << " s" << std::endl;
+            std::cout << "Elapsed time: " << elapsed_seconds.count() << " s" << std::endl;
+        }
     }
 
     MPI_Finalize();

@@ -24,8 +24,23 @@ public:
 
         solution.reserve(domain.getDimensions());
         solution.resize(domain.getDimensions());
-        for (int i = 0; i < domain.getDimensions(); ++i)
-            solution.at(i) = (domain.upperBound(i) - domain.lowerBound(i)) / 2 + domain.lowerBound(i);
+
+        int lDim = 0;
+        double nLDim = 0.;
+        for (int i = 0; i < domain.getDimensions(); ++i) {
+            if((domain.upperBound(i) - domain.lowerBound(i)) > nLDim){
+                nLDim = (domain.upperBound(i) - domain.lowerBound(i));
+                lDim = i;
+            }
+        }
+
+        for (int i = 0; i < domain.getDimensions(); ++i){
+            if(lDim == i){
+                solution.at(i) = domain.lowerBound(i) + (rank + 0.5) * ((domain.upperBound(i) - domain.lowerBound(i)) / size);
+            } else {
+                solution.at(i) = domain.lowerBound(i) + (domain.upperBound(i) - domain.lowerBound(i)) / 2;
+            }
+        }
 
         mu::Parser parser;
 

@@ -7,6 +7,7 @@
 #include <fstream>
 #include <mpi.h>
 #include <iostream>
+#include <random>
 
 Domain::Domain(const std::string& filename) {
 
@@ -34,21 +35,12 @@ Domain::Domain(const std::string& filename) {
 
     inFile.close();
 
-    int rank, size;
+    int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
-    engine.seed(rank);
 
-    double partialSize0 = (bounds.at(0).second - bounds.at(0).first) / (size / 2.);
-    double partialSize1 = (bounds.at(1).second - bounds.at(1).first) / 2.;
-
-    bounds.at(0).first = bounds.at(0).first + (rank % (size / 2)) * partialSize0;
-    bounds.at(0).second = bounds.at(0).first + partialSize0;
-
-    if(dimensions == 2){
-        bounds.at(1).first = bounds.at(1).first + ((rank < (size / 2)) ? 0 : 1) * partialSize1;
-        bounds.at(1).second = bounds.at(1).first + partialSize1;
-    }
+    std::srand(time(nullptr));
+    int rand = std::rand();
+    engine.seed(rand * rank);
 
 }
 
