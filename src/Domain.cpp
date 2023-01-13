@@ -85,3 +85,29 @@ double Domain::randomUnitary() {
 
     return unitary(engine);
 }
+
+std::vector<double> Domain::generateInitialSolution(int & rank, int & size){
+    int lDim = 0;
+    double nLDim = 0.;
+    std::vector<double> solution;
+
+    solution.reserve(dimensions);
+    solution.resize(dimensions);
+    
+    for (int i = 0; i < dimensions; ++i) {
+        if((bounds.at(i).second - bounds.at(i).first) > nLDim){
+            nLDim = (bounds.at(i).second - bounds.at(i).first);
+            lDim = i;
+        }
+    }
+            
+    for (int i = 0; i < dimensions; ++i){
+        if(lDim == i){
+            solution.at(i) = bounds.at(i).first + (rank + 0.5) * (bounds.at(i).second - bounds.at(i).first) / size;
+        } else {
+            solution.at(i) = bounds.at(i).first + (bounds.at(i).second - bounds.at(i).first) / 2;
+        }
+    }
+
+    return solution;
+}
