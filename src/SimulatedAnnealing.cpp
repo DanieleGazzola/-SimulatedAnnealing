@@ -8,22 +8,17 @@
 #include <mpi.h>
 #include <iostream>
 #include <chrono>
-#include "Domain.h"
+#include "SimulatedAnnealing.h"
 #include "muParser.h"
 
-mu::Parser getInitializedParser(Domain &domain, std::vector<double> &solution){
+mu::Parser getInitializedParser(int domainDimension, std::string function, std::vector<double> &solution){
     double PI = M_PI;
     mu::Parser parser;
 
-    parser.SetExpr(domain.getFunction());
+    parser.SetExpr(function);
     parser.DefineVar("pi", &PI);
 
-    for (int i = 0; i < domain.getDimensions(); ++i) {
-        std::string arg = "x";
-        arg += std::to_string(i + 1);
-        parser.DefineVar(arg, &solution.at(i));
-    }
-
+    setNewPoint(domainDimension, parser, solution);
     return parser;
 }
 
@@ -35,54 +30,41 @@ void setNewPoint(int domainDimension, mu::Parser &parser, std::vector<double> &n
     }
 }
 
-class SimulatedAnnealing{
-    public:
-        SimulatedAnnealing(): L{1000}, 
-            c{0.99},
-            alpha{0.95},
-            toll{0.001},
-            fSolution{}
-        {}
+void findMinimum(const Domain domain, const mu::Parser parser){
+    double radius = (domain.upperBound(0) - domain.lowerBound(0)) / 5.;  //????????
+    double fNew;
 
-        SimulatedAnnealing(int & L, double & c, double & alpha, double & toll): 
-            L{L}, 
-            c{c},
-            alpha{alpha},
-            toll{toll}
-        {}
+    std::vector<double> newPoint;
+    newPoint.reserve(domain.getDimensions());
+    newPoint.resize(domain.getDimensions());
 
-        ~SimulatedAnnealing() = default;
+    do{
+        for (int i = 0; i < L; ++i) {
+            newPoint = domain.generateNeighborhood(solution, radius);
+            setNewPoint(domain.getDimensions(), parser, newPoint);
 
-        void simulatedAnnealing(Domain domain){
+            fNew = parser.Eval();
+
+            if(fNew < fSolution || std::exp((fSolution - fNew) / c) > domain.randomUnitary()){
+                solution = newPoint;
+                fSolution = fNew;
+            }
+        }
+        c = c * alpha;
+    } while (c > toll);
+}
+
+SimulatedAnnealing::SimulatedAnnealing(){
+        void simulatedAnnealing(Domain domain, std::string function){
             int rank, size;
             MPI_Comm_rank(MPI_COMM_WORLD, &rank);
             MPI_Comm_size(MPI_COMM_WORLD, &size);
 
             solution = domain.generateInitialSolution(rank, size);
-            mu::Parser parser = getInitializedParser(domain, solution);
+            mu::Parser parser = getInitializedParser(domain.getDimensions(), domain, solution);
             fSolution = parser.Eval();
 
-            double radius = (domain.upperBound(0) - domain.lowerBound(0)) / 5.;
-            double fNew;
-
-            std::vector<double> newPoint;
-            newPoint.reserve(domain.getDimensions());
-            newPoint.resize(domain.getDimensions());
-
-            do{
-                for (int i = 0; i < L; ++i) {
-                    newPoint = domain.generateNeighborhood(solution, radius);
-                    setNewPoint(domain.getDimensions(), parser, newPoint);
-
-                    fNew = parser.Eval();
-
-                    if(fNew < fSolution || std::exp((fSolution - fNew) / c) > domain.randomUnitary()){
-                        solution = newPoint;
-                        fSolution = fNew;
-                    }
-                }
-                c = c * alpha;
-            } while (c > toll);
+            findMinimum(domain, parser);
 
             if(rank == 0){
                 std::vector<double> tempSol;
@@ -104,15 +86,4 @@ class SimulatedAnnealing{
             }
 
         }
-
-        std::vector<double> getSolution() { return this->solution; }
-        double getFSolution() const{return this->fSolution; }
-
-    private:
-        int L;
-        double c;
-        double alpha;
-        double toll;
-        double fSolution;
-        std::vector<double> solution;
-};
+}
