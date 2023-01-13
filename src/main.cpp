@@ -1,33 +1,62 @@
-//
-// Created by danie on 15/12/2022.
-//
-
-#include <iostream>
 #include <chrono>
+#include <fstream>
+#include <iostream>
 #include <mpi.h>
 #include "omp.h"
 #include "Domain.h"
-#include "Domain.cpp"
-#include "SimulatedAnnealing.cpp"
+#include "SimulatedAnnealing.h"
 
-#define ARGC 2
+using domainBounds = std::vector<std::pair<double, double>>;
+
+void readFile(const std::string& filename, domainBounds& bounds, std::string& function){
+    int dimensions;
+    std::ifstream inFile;
+    inFile.open(filename, std::ios_base::in);
+
+    if(!inFile) std::exit(-1);
+
+    inFile >> function;
+    inFile >> dimensions;
+
+    bounds.reserve(dimensions);
+    bounds.resize(dimensions);
+
+    for (int i = 0; i < dimensions; ++i) {
+        inFile >> bounds.at(i).first;
+        inFile >> bounds.at(i).second;
+
+        if(bounds.at(i).first == bounds.at(i).second)
+            std::exit(-1);
+
+        if(bounds.at(i).first > bounds.at(i).second)
+            std::swap(bounds.at(i).first, bounds.at(i).second);
+    }
+
+    inFile.close();
+}
 
 int main(int argc, char** argv){
 
-    if(argc != ARGC){
-        std::cout << "Wrong number of command line arguments: " << argc << ". Should be: " << ARGC << std::endl;
+    if(argc != 2){
+        std::cout << "Wrong number of command line arguments" << std::endl;
         return -1;
     }
 
-    MPI_Init(&argc, &argv);
+    domainBounds bounds;
+    std::string function;
+    readFile(argv[1], bounds, function);
 
     int rank, size;
+    MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    //for tests only
-    //#pragma omp parallel for
-    //for (int i = 0; i < 10; ++i) {
+    Domain domain(bounds, rank);
+
+    MPI_Finalize();
+
+    /*
+    for (int i = 0; i < 10; ++i) {
         Domain domain(argv[1]);
         SimulatedAnnealing SA;
 
@@ -48,9 +77,8 @@ int main(int argc, char** argv){
 
             std::cout << "Elapsed time: " << elapsed_seconds.count() << " s" << std::endl;
         }
-    //}
-
-    MPI_Finalize();
+    }
+    */
 
     return 0;
 }
