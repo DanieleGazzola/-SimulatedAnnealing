@@ -52,6 +52,21 @@ int main(int argc, char** argv){
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
     Domain domain(bounds, rank);
+    SimulatedAnnealing SA;
+
+    auto start = std::chrono::system_clock::now();
+    SA.simulatedAnnealing(domain, function);
+    auto end = std::chrono::system_clock::now();
+    std::chrono::duration<double> elapsed_seconds = end-start;
+
+    if(rank == 0){
+        std::cout << "Point found: ";
+        for (int j = 0; j < domain.getDimensions(); ++j)
+            std::cout << SA.getSolution().at(j) << " ";
+        std::cout << std::endl;
+        std::cout << "F(x) = " << SA.getFSolution() << std::endl;
+        std::cout << "Elapsed time: " << elapsed_seconds.count() << " s" << std::endl;
+    }
 
     MPI_Finalize();
 

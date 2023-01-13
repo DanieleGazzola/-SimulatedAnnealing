@@ -12,7 +12,8 @@
 
 class SimulatedAnnealing{
     public:
-        SimulatedAnnealing(): L{1000}, 
+        SimulatedAnnealing(): 
+            L{1000}, 
             c{0.99},
             alpha{0.95},
             toll{0.001},
@@ -28,7 +29,7 @@ class SimulatedAnnealing{
 
         ~SimulatedAnnealing() = default;
 
-        void simulatedAnnealing(Domain domain);
+        void simulatedAnnealing(Domain domain, std::string function);
 
         std::vector<double> getSolution() {return this->solution;}
         double getFSolution() const{return this->fSolution;}
@@ -40,6 +41,10 @@ class SimulatedAnnealing{
         double toll;
         double fSolution;
         std::vector<double> solution;
+
+        void findMinimum(Domain domain, mu::Parser parser);
+        void setNewPoint(int domainDimension, mu::Parser &parser, std::vector<double>& newPoint);
+        mu::Parser getInitializedParser(int domainDimension, std::string function, std::vector<double>& solution);
 };
 
 #endif

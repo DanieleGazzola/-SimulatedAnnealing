@@ -57,7 +57,7 @@ double Domain::randomUnitary() {
     return unitary(engine);
 }
 
-std::vector<double> Domain::generateInitialSolution(int & rank, int & size){
+std::vector<double> Domain::generateInitialSolution(int& rank, int& size){
     int lDim = 0;
     double nLDim = 0.;
     std::vector<double> solution;
