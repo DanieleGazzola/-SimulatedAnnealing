@@ -26,8 +26,8 @@ int main(int argc, char** argv){
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
     //for tests only
-    #pragma omp parallel for
-    for (int i = 0; i < 10; ++i) {
+    //#pragma omp parallel for
+    //for (int i = 0; i < 10; ++i) {
         Domain domain(argv[1]);
         SimulatedAnnealing SA;
 
@@ -38,7 +38,7 @@ int main(int argc, char** argv){
         std::chrono::duration<double> elapsed_seconds = end-start;
 
         if(rank == 0){
-            std::cout << "Iteration: " << i << std::endl;
+            //std::cout << "Iteration: " << i << std::endl;
             std::cout << "Point found: ";
             for (int j = 0; j < domain.getDimensions(); ++j)
                 std::cout << SA.getSolution().at(j) << " ";
@@ -48,7 +48,7 @@ int main(int argc, char** argv){
 
             std::cout << "Elapsed time: " << elapsed_seconds.count() << " s" << std::endl;
         }
-    }
+    //}
 
     MPI_Finalize();
 
