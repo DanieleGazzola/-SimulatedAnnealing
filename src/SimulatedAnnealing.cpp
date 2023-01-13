@@ -27,9 +27,30 @@ mu::Parser getInitializedParser(Domain &domain, std::vector<double> &solution){
     return parser;
 }
 
+void setNewPoint(int domainDimension, mu::Parser &parser, std::vector<double> &newPoint){
+    for (int j = 0; j < domainDimension; ++j) {
+        std::string arg = "x";
+        arg += std::to_string(j + 1);
+        parser.DefineVar(arg, &newPoint.at(j));
+    }
+}
+
 class SimulatedAnnealing{
     public:
-        SimulatedAnnealing() = default;
+        SimulatedAnnealing(): L{1000}, 
+            c{0.99},
+            alpha{0.95},
+            toll{0.001},
+            fSolution{}
+        {}
+
+        SimulatedAnnealing(int & L, double & c, double & alpha, double & toll): 
+            L{L}, 
+            c{c},
+            alpha{alpha},
+            toll{toll}
+        {}
+
         ~SimulatedAnnealing() = default;
 
         void simulatedAnnealing(Domain domain){
@@ -39,32 +60,19 @@ class SimulatedAnnealing{
 
             solution = domain.generateInitialSolution(rank, size);
             mu::Parser parser = getInitializedParser(domain, solution);
-
             fSolution = parser.Eval();
 
-            //da far diventare parametri
-            double c = 0.99;
-            int L = 1000;
-            double alpha = 0.95;
-            double toll = 0.001;
-
             double radius = (domain.upperBound(0) - domain.lowerBound(0)) / 5.;
+            double fNew;
 
             std::vector<double> newPoint;
-            double fNew;
             newPoint.reserve(domain.getDimensions());
             newPoint.resize(domain.getDimensions());
 
             do{
                 for (int i = 0; i < L; ++i) {
-
                     newPoint = domain.generateNeighborhood(solution, radius);
-
-                    for (int j = 0; j < domain.getDimensions(); ++j) {
-                        std::string arg = "x";
-                        arg += std::to_string(j + 1);
-                        parser.DefineVar(arg, &newPoint.at(j));
-                    }
+                    setNewPoint(domain.getDimensions(), parser, newPoint);
 
                     fNew = parser.Eval();
 
@@ -72,11 +80,8 @@ class SimulatedAnnealing{
                         solution = newPoint;
                         fSolution = fNew;
                     }
-
                 }
-
                 c = c * alpha;
-
             } while (c > toll);
 
             if(rank == 0){
@@ -104,6 +109,10 @@ class SimulatedAnnealing{
         double getFSolution() const{return this->fSolution; }
 
     private:
+        int L;
+        double c;
+        double alpha;
+        double toll;
+        double fSolution;
         std::vector<double> solution;
-        double fSolution{};
 };
