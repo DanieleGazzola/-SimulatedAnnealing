@@ -1,47 +1,18 @@
-//
-// Created by danie on 15/12/2022.
-//
-
 #include "Domain.h"
 #include <string>
-#include <fstream>
+#include <vector>
 #include <mpi.h>
 #include <iostream>
 #include <random>
 
-Domain::Domain(const std::string& filename) {
+using domainBounds = std::vector<std::pair<double, double>>;
 
-    std::ifstream inFile;
-    inFile.open(filename, std::ios_base::in);
-    if(!inFile)
-        std::exit(-1);
-
-    inFile >> function;
-    inFile >> dimensions;
-
-    bounds.reserve(dimensions);
-    bounds.resize(dimensions);
-
-    for (int i = 0; i < dimensions; ++i) {
-        inFile >> bounds.at(i).first;
-        inFile >> bounds.at(i).second;
-
-        if(bounds.at(i).first == bounds.at(i).second)
-            std::exit(-1);
-
-        if(bounds.at(i).first > bounds.at(i).second)
-            std::swap(bounds.at(i).first, bounds.at(i).second);
-    }
-
-    inFile.close();
-
-    int rank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
+Domain::Domain(domainBounds passedBounds, int rank){
+    bounds = passedBounds;
+    dimensions = bounds.size();
     std::srand(time(nullptr));
     int rand = std::rand();
     engine.seed(rand * rank);
-
 }
 
 std::vector<double> Domain::generateNeighborhood(std::vector<double> centre, double radius) {
