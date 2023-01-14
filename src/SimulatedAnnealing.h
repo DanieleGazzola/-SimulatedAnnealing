@@ -20,7 +20,7 @@ class SimulatedAnnealing{
             fSolution{}
         {}
 
-        SimulatedAnnealing(int & L, double & c, double & alpha, double & toll): 
+        SimulatedAnnealing(int L, double c, double alpha, double toll): 
             L{L}, 
             c{c},
             alpha{alpha},
@@ -41,8 +41,9 @@ class SimulatedAnnealing{
         double toll;
         double fSolution;
         std::vector<double> solution;
+        std::vector<double> stepsize;
 
-        void findMinimum(Domain domain, mu::Parser parser);
+        void findMinimum(Domain domain, mu::Parser parser, int size);
         void setNewPoint(int domainDimension, mu::Parser &parser, std::vector<double>& newPoint);
         mu::Parser getInitializedParser(int domainDimension, std::string function, std::vector<double>& solution);
 };

@@ -19,8 +19,10 @@ class Domain {
         double randomUnitary();
 
         std::vector<double> generateInitialSolution(int& rank, int& size);
-        std::vector<double> generateNeighborhood(std::vector<double>, double);
-
+        std::vector<double> generateStepsize(int& rank, int& size);
+        //std::vector<double> generateNewPoint(std::vector<double> centre, double radius);
+        std::vector<double> generateNewPoint(std::vector<double> currentPoint, std::vector<double>& stepsize);
+        
     private:
         int dimensions;
         std::vector<std::pair<double, double>> bounds;

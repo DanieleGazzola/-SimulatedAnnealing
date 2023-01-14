@@ -15,7 +15,7 @@ Domain::Domain(domainBounds passedBounds, int rank){
     engine.seed(rand * rank);
 }
 
-std::vector<double> Domain::generateNeighborhood(std::vector<double> centre, double radius) {
+/*std::vector<double> Domain::generateNewPoint(std::vector<double> centre, double radius) {
 
     std::uniform_real_distribution<double> maxStep(-radius, radius);
     std::vector<double> moves;
@@ -49,6 +49,34 @@ std::vector<double> Domain::generateNeighborhood(std::vector<double> centre, dou
         centre.at(i) += moves.at(i);
 
     return centre;
+}*/
+
+std::vector<double> Domain::generateNewPoint(std::vector<double> currentPoint, std::vector<double>& stepsize){
+    std::vector<double> newPoint;
+    newPoint.reserve(dimensions);
+    newPoint.resize(dimensions);
+    double shrinkingFactor = randomUnitary();
+
+    for (int i = 0; i < dimensions; ++i){
+        if(randomUnitary() < 0.5){
+            if((currentPoint[i] + stepsize[i]*shrinkingFactor) <= bounds[i].second){
+                newPoint[i] = (currentPoint[i] + stepsize[i]*shrinkingFactor);
+            }
+            else{
+                newPoint[i] = bounds[i].second;
+            }
+        }
+        else{
+            if((currentPoint[i] - stepsize[i]*shrinkingFactor) >= bounds[i].first){
+                newPoint[i] = (currentPoint[i] - stepsize[i]*shrinkingFactor );
+            }
+            else{
+                newPoint[i] = bounds[i].first;
+            }
+        }
+    }
+
+    return newPoint;
 }
 
 double Domain::randomUnitary() {
@@ -58,27 +86,28 @@ double Domain::randomUnitary() {
 }
 
 std::vector<double> Domain::generateInitialSolution(int& rank, int& size){
-    int lDim = 0;
-    double nLDim = 0.;
-    std::vector<double> solution;
-
-    solution.reserve(dimensions);
-    solution.resize(dimensions);
+    std::vector<double> initialSolution;
+    initialSolution.reserve(dimensions);
+    initialSolution.resize(dimensions);
     
-    for (int i = 0; i < dimensions; ++i) {
-        if((bounds.at(i).second - bounds.at(i).first) > nLDim){
-            nLDim = (bounds.at(i).second - bounds.at(i).first);
-            lDim = i;
-        }
-    }
-            
-    for (int i = 0; i < dimensions; ++i){
-        if(lDim == i){
-            solution.at(i) = bounds.at(i).first + (rank + 0.5) * (bounds.at(i).second - bounds.at(i).first) / size;
-        } else {
-            solution.at(i) = bounds.at(i).first + (bounds.at(i).second - bounds.at(i).first) / 2;
-        }
+    for(int i = 0; i < dimensions; ++i){
+        initialSolution[i] = bounds[i].first + (bounds[i].second - bounds[i].first) * randomUnitary(); 
     }
 
-    return solution;
+    return initialSolution;
+}
+
+std::vector<double> Domain::generateStepsize(int& rank, int& size){
+    std::vector<double> stepsize;
+    stepsize.reserve(dimensions);
+    stepsize.resize(dimensions);
+
+    for(int i = 0; i < dimensions; ++i){
+        do {
+            stepsize[i] = (bounds[i].second - bounds[i].first) * randomUnitary() / 50.0;// + (bounds[i].second - bounds[i].first) * ((static_cast<double>(rank))/(2.0*static_cast<double>(size))); 
+        }
+        while (stepsize[i] >= (bounds[i].second - bounds[i].first));
+    }   
+
+    return stepsize;
 }

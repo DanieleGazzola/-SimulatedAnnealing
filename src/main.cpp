@@ -1,6 +1,7 @@
 #include <chrono>
 #include <fstream>
 #include <iostream>
+#include <string>
 #include <mpi.h>
 #include "omp.h"
 #include "Domain.h"
@@ -18,18 +19,22 @@ void readFile(const std::string& filename, domainBounds& bounds, std::string& fu
     inFile >> function;
     inFile >> dimensions;
 
-    bounds.reserve(dimensions);
-    bounds.resize(dimensions);
+    if(dimensions < 1) std::exit(-1);
+    
+    if(dimensions > 0){
+        bounds.reserve(dimensions);
+        bounds.resize(dimensions);  
 
-    for (int i = 0; i < dimensions; ++i) {
-        inFile >> bounds.at(i).first;
-        inFile >> bounds.at(i).second;
+        for (int i = 0; i < dimensions; ++i) {
+            inFile >> bounds.at(i).first;
+            inFile >> bounds.at(i).second;
 
-        if(bounds.at(i).first == bounds.at(i).second)
-            std::exit(-1);
+            if(bounds.at(i).first == bounds.at(i).second)
+                std::exit(-1);
 
-        if(bounds.at(i).first > bounds.at(i).second)
-            std::swap(bounds.at(i).first, bounds.at(i).second);
+            if(bounds.at(i).first > bounds.at(i).second)
+                std::swap(bounds.at(i).first, bounds.at(i).second);
+        }
     }
 
     inFile.close();
@@ -37,7 +42,7 @@ void readFile(const std::string& filename, domainBounds& bounds, std::string& fu
 
 int main(int argc, char** argv){
 
-    if(argc != 2){
+    if(argc != 6){
         std::cout << "Wrong number of command line arguments" << std::endl;
         return -1;
     }
@@ -52,7 +57,7 @@ int main(int argc, char** argv){
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
     Domain domain(bounds, rank);
-    SimulatedAnnealing SA;
+    SimulatedAnnealing SA(std::stoi(argv[2]), std::stod(argv[3]), std::stod(argv[4]), std::stod(argv[5]));
 
     auto start = std::chrono::system_clock::now();
     SA.simulatedAnnealing(domain, function);
@@ -69,31 +74,6 @@ int main(int argc, char** argv){
     }
 
     MPI_Finalize();
-
-    /*
-    for (int i = 0; i < 10; ++i) {
-        Domain domain(argv[1]);
-        SimulatedAnnealing SA;
-
-        auto start = std::chrono::system_clock::now();
-        SA.simulatedAnnealing(domain);
-        auto end = std::chrono::system_clock::now();
-
-        std::chrono::duration<double> elapsed_seconds = end-start;
-
-        if(rank == 0){
-            //std::cout << "Iteration: " << i << std::endl;
-            std::cout << "Point found: ";
-            for (int j = 0; j < domain.getDimensions(); ++j)
-                std::cout << SA.getSolution().at(j) << " ";
-            std::cout << std::endl;
-
-            std::cout << "F(x) = " << SA.getFSolution() << std::endl;
-
-            std::cout << "Elapsed time: " << elapsed_seconds.count() << " s" << std::endl;
-        }
-    }
-    */
 
     return 0;
 }

@@ -26,6 +26,6 @@ Other rows: bounds for each dimension
 ---
 ```
 cd src/
-mpicc -I../muparser-2.3.4/include main.cpp -o main -L../muparser-2.3.4 -lmuparser -lstdc++ -lm -fopenmp -Wall
-mpiexec -n 4 ./main "../input"
+mpicc -I../muparser-2.3.4/include main.cpp Domain.cpp SimulatedAnnealing.cpp -o main -L../muparser-2.3.4 -lmuparser -lstdc++ -lm -fopenmp -Wall
+mpiexec -n 1 ./main "../test/input1" 2000 10 0.99 0.001
 ```
