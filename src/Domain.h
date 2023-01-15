@@ -2,9 +2,9 @@
 #define DOMAIN_H
 
 #include <iostream>
+#include <random>
 #include <string>
 #include <vector>
-#include <random>
 
 using domainBounds = std::vector<std::pair<double, double>>;
 
@@ -14,13 +14,12 @@ class Domain {
         ~Domain() = default;
 
         int getDimensions() const { return this->dimensions; }
-        double lowerBound(int i) const { return this->bounds.at(i).first; }
-        double upperBound(int i) const { return this->bounds.at(i).second; }
+        double lowerBound(int i) const { return this->bounds[i].first; }
+        double upperBound(int i) const { return this->bounds[i].second; }
         double randomUnitary();
 
-        std::vector<double> generateInitialSolution(int& rank, int& size);
-        std::vector<double> generateStepsize(int& rank, int& size);
-        //std::vector<double> generateNewPoint(std::vector<double> centre, double radius);
+        std::vector<double> generateInitialSolution();
+        std::vector<double> generateStepsize(); //int& rank, int& size);
         std::vector<double> generateNewPoint(std::vector<double> currentPoint, std::vector<double>& stepsize);
         
     private:

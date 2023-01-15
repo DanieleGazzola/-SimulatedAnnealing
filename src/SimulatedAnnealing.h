@@ -1,30 +1,22 @@
 #ifndef SIMULATEDANNEALING_H
 #define SIMULATEDANNEALING_H
 
-#include <vector>
 #include <cmath>
-#include <random>
-#include <mpi.h>
 #include <iostream>
-#include <chrono>
+#include <mpi.h>
+#include <random>
+#include <vector>
 #include "Domain.h"
 #include "muParser.h"
 
 class SimulatedAnnealing{
     public:
-        SimulatedAnnealing(): 
-            L{1000}, 
-            c{0.99},
-            alpha{0.95},
-            toll{0.001},
-            fSolution{}
-        {}
-
-        SimulatedAnnealing(int L, double c, double alpha, double toll): 
+        explicit SimulatedAnnealing(int L, int numStartingPoints, double T, double alpha, double tol): 
             L{L}, 
-            c{c},
+            numStartingPoints{numStartingPoints},
+            T{T},
             alpha{alpha},
-            toll{toll}
+            tol{tol}
         {}
 
         ~SimulatedAnnealing() = default;
@@ -36,16 +28,18 @@ class SimulatedAnnealing{
 
     private:
         int L;
-        double c;
+        int numStartingPoints;
+        double T;
         double alpha;
-        double toll;
+        double tol;
         double fSolution;
         std::vector<double> solution;
         std::vector<double> stepsize;
 
+        mu::Parser getInitializedParser(int& domainDimension, std::string function, std::vector<double>& solution);
         void findMinimum(Domain domain, mu::Parser parser, int size);
-        void setNewPoint(int domainDimension, mu::Parser &parser, std::vector<double>& newPoint);
-        mu::Parser getInitializedParser(int domainDimension, std::string function, std::vector<double>& solution);
+        void setNewPoint(int domainDimension, mu::Parser& parser, std::vector<double>& newPoint);
+        void exchangeData(int& dimensions, int& numCurrentPoint);
 };
 
 #endif

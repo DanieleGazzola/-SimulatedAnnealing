@@ -1,13 +1,13 @@
-#include <vector>
 #include <cmath>
-#include <random>
-#include <mpi.h>
 #include <iostream>
-#include <chrono>
-#include "SimulatedAnnealing.h"
+#include <mpi.h>
+#include <random>
+#include <vector>
+#include "Domain.h"
 #include "muParser.h"
+#include "SimulatedAnnealing.h"
 
-mu::Parser SimulatedAnnealing::getInitializedParser(int domainDimension, std::string function, std::vector<double>& solution){
+mu::Parser SimulatedAnnealing::getInitializedParser(int& domainDimension, std::string function, std::vector<double>& solution){
     mu::Parser parser;
     parser.SetExpr(function);
     setNewPoint(domainDimension, parser, solution);
@@ -18,23 +18,23 @@ void SimulatedAnnealing::setNewPoint(int domainDimension, mu::Parser& parser, st
     for (int j = 0; j < domainDimension; ++j) {
         std::string arg = "x";
         arg += std::to_string(j + 1);
-        parser.DefineVar(arg, &newPoint.at(j));
+        parser.DefineVar(arg, &newPoint[j]);
     }
 }
 
 void SimulatedAnnealing::findMinimum(Domain domain, mu::Parser parser, int size){
-    double fNew, tempFSolution = fSolution;
+    double fNew, tempFSolution{fSolution}, temp{T};
     std::vector<double> newPoint, tempSol = solution;
     newPoint.reserve(domain.getDimensions());
     newPoint.resize(domain.getDimensions());
 
-    do{
+    while(temp > tol){
         for (int i = 0; i < L; ++i) {
             newPoint = domain.generateNewPoint(tempSol, stepsize);
             setNewPoint(domain.getDimensions(), parser, newPoint);
             fNew = parser.Eval();
 
-            if(fNew < tempFSolution || std::exp((tempFSolution - fNew) / c) > domain.randomUnitary()){
+            if(fNew < tempFSolution || std::exp((tempFSolution - fNew) / temp) > domain.randomUnitary()){
                 if(fNew < fSolution){
                     solution = newPoint;
                     fSolution = fNew;
@@ -43,72 +43,82 @@ void SimulatedAnnealing::findMinimum(Domain domain, mu::Parser parser, int size)
                 tempFSolution = fNew;
             }
         }
-        c = c * alpha;
-    } while (c > toll);
+        temp = temp * alpha;
+    }
 }
 
-
-void SimulatedAnnealing::simulatedAnnealing(Domain domain, std::string function){
+void SimulatedAnnealing::exchangeData(int& dimensions, int& numCurrentPoint){
+    std::vector<double> tempSol;
+    tempSol.reserve(dimensions);
+    tempSol.resize(dimensions);
+    double tempFSol;
     int rank, size;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
-    solution.reserve(domain.getDimensions());
-    solution.resize(domain.getDimensions());
-    stepsize.reserve(domain.getDimensions());
-    stepsize.resize(domain.getDimensions());
 
     if (rank == 0){
-        for (int i = 0; i < size; ++i){
-            std::vector<double> startingPoint = domain.generateInitialSolution(i, size);
-            std::vector<double> tempStepsize = domain.generateStepsize(i, size);
-            if(i != 0){ 
-                MPI_Send(&startingPoint[0], domain.getDimensions(), MPI_DOUBLE, i, 0, MPI_COMM_WORLD);
-                MPI_Send(&tempStepsize[0], domain.getDimensions(), MPI_DOUBLE, i, 1, MPI_COMM_WORLD); 
+        for (int i = 1; i < size; ++i){
+            if(numCurrentPoint + i < numStartingPoints){
+                MPI_Recv(&tempSol[0], dimensions, MPI_DOUBLE, i, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                MPI_Recv(&tempFSol, 1, MPI_DOUBLE, i, 3, MPI_COMM_WORLD, MPI_STATUS_IGNORE); 
+
+                if(tempFSol < fSolution){
+                    fSolution = tempFSol;
+                    solution = tempSol;
+                }
+            }
+        }
+    }
+    else{
+        MPI_Send(&solution[0], dimensions, MPI_DOUBLE, 0, 2, MPI_COMM_WORLD);
+        MPI_Send(&fSolution, 1, MPI_DOUBLE, 0, 3, MPI_COMM_WORLD);
+    }   
+}
+
+void SimulatedAnnealing::simulatedAnnealing(Domain domain, std::string function){
+    int rank, size, dimensions = domain.getDimensions();
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    int numCurrentPoint = rank;
+
+    std::vector<double> bestSolution;
+    double bestFSolution;
+    solution.reserve(dimensions);
+    solution.resize(dimensions);
+    stepsize.reserve(dimensions);
+    stepsize.resize(dimensions);
+    bestSolution.reserve(dimensions);
+    bestSolution.resize(dimensions);
+
+    while(numCurrentPoint < numStartingPoints){
+        solution = domain.generateInitialSolution();
+        stepsize = domain.generateStepsize();
+
+        //std::cout << solution[0] << " " << solution[1] << " " << stepsize[0] << " " << stepsize[1] << std::endl;
+
+        mu::Parser parser = getInitializedParser(dimensions, function, solution);
+        fSolution = parser.Eval();
+        findMinimum(domain, parser, size);
+
+        exchangeData(dimensions, numCurrentPoint);
+        if(rank == 0){
+            //std::cout << "init: " << solution[0] << " " << solution[1] << " " << fSolution << " " << numCurrentPoint << std::endl;
+            if (numCurrentPoint == 0){
+                bestFSolution = fSolution;
+                bestSolution = solution;
             }
             else{
-                solution = startingPoint;
-                stepsize = tempStepsize;
-            }
+                if (bestFSolution > fSolution){
+                    bestFSolution = fSolution;
+                    bestSolution = solution;
+                }
+            } 
+            //std::cout << "end: " << bestSolution[0] << " " << bestSolution[1] << " " << bestFSolution << " " << numCurrentPoint << std::endl;
         }
-    }
-    else{
-        MPI_Recv(&solution[0], domain.getDimensions(), MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        MPI_Recv(&stepsize[0], domain.getDimensions(), MPI_DOUBLE, 0, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    
+        numCurrentPoint += size;
     }
 
-    //std::cout << solution.at(0) << " " << solution.at(1) << " " << stepsize.at(0) << " " << stepsize.at(1) << std::endl;
-
-    mu::Parser parser = getInitializedParser(domain.getDimensions(), function, solution);
-    fSolution = parser.Eval();
-
-    findMinimum(domain, parser, size);
-    //std::cout << solution.at(0) << " " << solution.at(1) << " " << fSolution << std::endl;
-
-    std::vector<double> tempSol;
-    tempSol.reserve(domain.getDimensions());
-    tempSol.resize(domain.getDimensions());
-    double tempFSol;
-
-    if (rank == 0){
-        for (int i = 1; i < size; ++i){
-            MPI_Recv(&tempSol[0], domain.getDimensions(), MPI_DOUBLE, i, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-            MPI_Recv(&tempFSol, 1, MPI_DOUBLE, i, 3, MPI_COMM_WORLD, MPI_STATUS_IGNORE); 
-
-            if(tempFSol < fSolution){
-                fSolution = tempFSol;
-                solution = tempSol;
-            }
-        }
-
-        for (int i = 1; i < size; ++i){
-            MPI_Send(&solution[0], domain.getDimensions(), MPI_DOUBLE, i, 4, MPI_COMM_WORLD);
-            MPI_Send(&fSolution, 1, MPI_DOUBLE, i, 5, MPI_COMM_WORLD); 
-        }
-    }
-    else{
-        MPI_Send(&solution[0], domain.getDimensions(), MPI_DOUBLE, 0, 2, MPI_COMM_WORLD);
-        MPI_Send(&fSolution, 1, MPI_DOUBLE, 0, 3, MPI_COMM_WORLD);
-        MPI_Recv(&solution[0], domain.getDimensions(), MPI_DOUBLE, 0, 4, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        MPI_Recv(&fSolution, 1, MPI_DOUBLE, 0, 5, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    }   
+    fSolution = bestFSolution;
+    solution = bestSolution;
 }
