@@ -57,6 +57,8 @@ int main(int argc, char** argv){
     double alpha = std::stod(argv[4]);
     double tol = std::stod(argv[5]);
     
+    if(alpha < 0.8 || alpha > 0.99){ alpha = 0.95; }
+    
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
