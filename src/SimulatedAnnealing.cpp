@@ -7,6 +7,7 @@
 #include "muParser.h"
 #include "SimulatedAnnealing.h"
 
+//puts the initial point generated into the parser
 mu::Parser SimulatedAnnealing::getInitializedParser(int& domainDimension, std::string function, std::vector<double>& solution){
     mu::Parser parser;
     parser.SetExpr(function);
@@ -14,6 +15,7 @@ mu::Parser SimulatedAnnealing::getInitializedParser(int& domainDimension, std::s
     return parser;
 }
 
+//puts the new point into the parser
 void SimulatedAnnealing::setNewPoint(int domainDimension, mu::Parser& parser, std::vector<double>& newPoint){
     for (int j = 0; j < domainDimension; ++j) {
         std::string arg = "x";
@@ -22,6 +24,9 @@ void SimulatedAnnealing::setNewPoint(int domainDimension, mu::Parser& parser, st
     }
 }
 
+//does the real Annealing:
+//External loop deals with the temperature
+//Internal loop deals with the number of iterations at each temperature
 void SimulatedAnnealing::findMinimum(Domain domain, mu::Parser parser, int size){
     double fNew, tempFSolution{fSolution}, temp{T};
     std::vector<double> newPoint, tempSol = solution;
@@ -94,15 +99,12 @@ void SimulatedAnnealing::simulatedAnnealing(Domain domain, std::string function)
         solution = domain.generateInitialSolution();
         stepsize = domain.generateStepsize();
 
-        //std::cout << solution[0] << " " << solution[1] << " " << stepsize[0] << " " << stepsize[1] << std::endl;
-
         mu::Parser parser = getInitializedParser(dimensions, function, solution);
         fSolution = parser.Eval();
         findMinimum(domain, parser, size);
 
         exchangeData(dimensions, numCurrentPoint);
         if(rank == 0){
-            //std::cout << "init: " << solution[0] << " " << solution[1] << " " << fSolution << " " << numCurrentPoint << std::endl;
             if (numCurrentPoint == 0){
                 bestFSolution = fSolution;
                 bestSolution = solution;
@@ -112,10 +114,8 @@ void SimulatedAnnealing::simulatedAnnealing(Domain domain, std::string function)
                     bestFSolution = fSolution;
                     bestSolution = solution;
                 }
-            } 
-            //std::cout << "end: " << bestSolution[0] << " " << bestSolution[1] << " " << bestFSolution << " " << numCurrentPoint << std::endl;
+            }
         }
-    
         numCurrentPoint += size;
     }
 

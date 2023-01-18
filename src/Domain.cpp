@@ -15,7 +15,6 @@ Domain::Domain(domainBounds passedBounds, int rank){
 
 double Domain::randomUnitary() {
     std::uniform_real_distribution<double> unitary(0., 1.);
-
     return unitary(engine);
 }
 
@@ -31,14 +30,14 @@ std::vector<double> Domain::generateInitialSolution(){
     return initialSolution;
 }
 
-std::vector<double> Domain::generateStepsize(){ //int& rank, int& size){
+std::vector<double> Domain::generateStepsize(){
     std::vector<double> stepsize;
     stepsize.reserve(dimensions);
     stepsize.resize(dimensions);
 
     for(int i = 0; i < dimensions; ++i){
         do {
-            stepsize[i] = (bounds[i].second - bounds[i].first) * randomUnitary(); // + (bounds[i].second - bounds[i].first) * ((static_cast<double>(rank))/(2.0*static_cast<double>(size))); 
+            stepsize[i] = (bounds[i].second - bounds[i].first) * randomUnitary();
         }
         while (stepsize[i] >= (bounds[i].second - bounds[i].first));
     }   

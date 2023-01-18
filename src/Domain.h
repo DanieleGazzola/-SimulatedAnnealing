@@ -19,7 +19,7 @@ class Domain {
         double randomUnitary();
 
         std::vector<double> generateInitialSolution();
-        std::vector<double> generateStepsize(); //int& rank, int& size);
+        std::vector<double> generateStepsize();
         std::vector<double> generateNewPoint(std::vector<double> currentPoint, std::vector<double>& stepsize);
         
     private:
