@@ -38,6 +38,10 @@ The parallel implementation is based on performing the execution of the algorith
 4. At the end of the sequential algorithm, each process sends the obtained results to the process with rank 0. Process with rank 0, collect all the results and keep just the best one;
 5. If the number of points on which has been performed the algorithm matches the one provided by the user, the results are displayed on the screen, else return to the point 2 mantaining alive the necessary processes to cover the remaining points.
 
+### Code structure
+Scrivere Code structure
+
+---
 ## Dependencies
 In order to use the Simulated Annealing Algorithm, you should download the repo and then perform the following commands from your terminal
 ```

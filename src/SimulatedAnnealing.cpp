@@ -7,7 +7,7 @@
 #include "muParser.h"
 #include "SimulatedAnnealing.h"
 
-//puts the initial point generated into the parser
+//Returns an initialized parser
 mu::Parser SimulatedAnnealing::getInitializedParser(int& domainDimension, std::string function, std::vector<double>& solution){
     mu::Parser parser;
     parser.SetExpr(function);
@@ -15,7 +15,7 @@ mu::Parser SimulatedAnnealing::getInitializedParser(int& domainDimension, std::s
     return parser;
 }
 
-//puts the new point into the parser
+//Set the parser to evaluate the function in a new point
 void SimulatedAnnealing::setNewPoint(int domainDimension, mu::Parser& parser, std::vector<double>& newPoint){
     for (int j = 0; j < domainDimension; ++j) {
         std::string arg = "x";
@@ -24,7 +24,7 @@ void SimulatedAnnealing::setNewPoint(int domainDimension, mu::Parser& parser, st
     }
 }
 
-//does the real Annealing:
+//Perform the sequential annealing:
 //External loop deals with the temperature
 //Internal loop deals with the number of iterations at each temperature
 void SimulatedAnnealing::findMinimum(Domain domain, mu::Parser parser, int size){
@@ -52,6 +52,7 @@ void SimulatedAnnealing::findMinimum(Domain domain, mu::Parser parser, int size)
     }
 }
 
+//Manages data exchange between different MPI processes
 void SimulatedAnnealing::exchangeData(int& dimensions, int& numCurrentPoint){
     std::vector<double> tempSol;
     tempSol.reserve(dimensions);
@@ -80,6 +81,7 @@ void SimulatedAnnealing::exchangeData(int& dimensions, int& numCurrentPoint){
     }   
 }
 
+//Performs simulatedAnnealing in parallel (if number of MPI processes > 1)
 void SimulatedAnnealing::simulatedAnnealing(Domain domain, std::string function){
     int rank, size, dimensions = domain.getDimensions();
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);

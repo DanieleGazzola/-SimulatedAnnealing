@@ -8,6 +8,7 @@
 
 using domainBounds = std::vector<std::pair<double, double>>;
 
+//Reads the function and the values ​​contained in the input file
 void readFile(const std::string& filename, domainBounds& bounds, std::string& function){
     int dimensions;
     std::ifstream inFile;
@@ -50,15 +51,15 @@ int main(int argc, char** argv){
     readFile(argv[1], bounds, function);
 
     int rank, size;
-    MPI_Init(&argc, &argv);
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
-
     int L = std::stoi(argv[2]);
     int numStartingPoints = std::stoi(argv[6]);
     double T = std::stod(argv[3]);
     double alpha = std::stod(argv[4]);
     double tol = std::stod(argv[5]);
+    
+    MPI_Init(&argc, &argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
 
     Domain domain(bounds, rank);
     SimulatedAnnealing SA(L, numStartingPoints, T, alpha, tol);
