@@ -47,7 +47,7 @@ class SimulatedAnnealing{
         void setNewPoint(int domainDimension, mu::Parser& parser, std::vector<double>& newPoint);
 
         //Manages data exchange between different MPI processes
-        void exchangeData(int& dimensions, int& numCurrentPoint);
+        void exchangeData(int& dimensions);
 };
 
 #endif

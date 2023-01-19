@@ -53,7 +53,7 @@ void SimulatedAnnealing::findMinimum(Domain domain, mu::Parser parser){
 }
 
 //Manages data exchange between different MPI processes
-void SimulatedAnnealing::exchangeData(int& dimensions, int& numCurrentPoint){
+void SimulatedAnnealing::exchangeData(int& dimensions){ 
     std::vector<double> tempSol;
     tempSol.reserve(dimensions);
     tempSol.resize(dimensions);
@@ -64,14 +64,12 @@ void SimulatedAnnealing::exchangeData(int& dimensions, int& numCurrentPoint){
 
     if (rank == 0){
         for (int i = 1; i < size; ++i){
-            if(numCurrentPoint + i < numStartingPoints){
-                MPI_Recv(&tempSol[0], dimensions, MPI_DOUBLE, i, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-                MPI_Recv(&tempFSol, 1, MPI_DOUBLE, i, 3, MPI_COMM_WORLD, MPI_STATUS_IGNORE); 
+            MPI_Recv(&tempSol[0], dimensions, MPI_DOUBLE, i, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            MPI_Recv(&tempFSol, 1, MPI_DOUBLE, i, 3, MPI_COMM_WORLD, MPI_STATUS_IGNORE); 
 
-                if(tempFSol < fSolution){
-                    fSolution = tempFSol;
-                    solution = tempSol;
-                }
+            if(tempFSol < fSolution){
+                fSolution = tempFSol;
+                solution = tempSol;
             }
         }
     }
@@ -105,22 +103,20 @@ void SimulatedAnnealing::simulatedAnnealing(Domain domain, std::string function)
         fSolution = parser.Eval();
         findMinimum(domain, parser);
 
-        exchangeData(dimensions, numCurrentPoint);
-        if(rank == 0){
-            if (numCurrentPoint == 0){
+        if (numCurrentPoint == rank){
+            bestFSolution = fSolution;
+            bestSolution = solution;
+        }
+        else{
+            if (bestFSolution > fSolution){
                 bestFSolution = fSolution;
                 bestSolution = solution;
             }
-            else{
-                if (bestFSolution > fSolution){
-                    bestFSolution = fSolution;
-                    bestSolution = solution;
-                }
-            }
         }
+
         numCurrentPoint += size;
     }
-
     fSolution = bestFSolution;
     solution = bestSolution;
+    exchangeData(dimensions);
 }
