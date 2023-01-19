@@ -41,7 +41,7 @@ class SimulatedAnnealing{
         mu::Parser getInitializedParser(int& domainDimension, std::string function, std::vector<double>& solution);
         
         //Perform the sequential annealing
-        void findMinimum(Domain domain, mu::Parser parser, int size);
+        void findMinimum(Domain domain, mu::Parser parser);
         
         //Set the parser to evaluate the function in a new point
         void setNewPoint(int domainDimension, mu::Parser& parser, std::vector<double>& newPoint);

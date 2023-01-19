@@ -82,7 +82,7 @@ It will compile the program and run it 4 times but with different number of proc
 
 ```
 cd src/
-make benchmark
+make
 ```
 ### **Eggholder function**
 - **Description:**

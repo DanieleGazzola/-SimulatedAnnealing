@@ -27,7 +27,7 @@ void SimulatedAnnealing::setNewPoint(int domainDimension, mu::Parser& parser, st
 //Perform the sequential annealing:
 //External loop deals with the temperature
 //Internal loop deals with the number of iterations at each temperature
-void SimulatedAnnealing::findMinimum(Domain domain, mu::Parser parser, int size){
+void SimulatedAnnealing::findMinimum(Domain domain, mu::Parser parser){
     double fNew, tempFSolution{fSolution}, temp{T};
     std::vector<double> newPoint, tempSol = solution;
     newPoint.reserve(domain.getDimensions());
@@ -103,7 +103,7 @@ void SimulatedAnnealing::simulatedAnnealing(Domain domain, std::string function)
 
         mu::Parser parser = getInitializedParser(dimensions, function, solution);
         fSolution = parser.Eval();
-        findMinimum(domain, parser, size);
+        findMinimum(domain, parser);
 
         exchangeData(dimensions, numCurrentPoint);
         if(rank == 0){
