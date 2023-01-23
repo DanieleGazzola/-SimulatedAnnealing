@@ -44,14 +44,14 @@ In order to use the Simulated Annealing Algorithm, run the following commands af
 cd muparser-2.3.4/
 cmake . -DENABLE_SAMPLES=OFF -DENABLE_OPENMP=ON -DENABLE_WIDE_CHAR=OFF -DBUILD_SHARED_LIBS=ON
 make
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/jellyfish/shared-folder/-SimulatedAnnealing/muparser-2.3.4
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PWD
 ```
 ---
 ## How to run the code
 ## Example
 ```
 cd src/
-mpicc -I../muparser-2.3.4/include main.cpp Domain.cpp SimulatedAnnealing.cpp -o main -L../muparser-2.3.4 -lmuparser -lstdc++ -lm -fopenmp -Wall
+mpic++ -I../muparser-2.3.4/include main.cpp Domain.cpp SimulatedAnnealing.cpp -o main -L../muparser-2.3.4 -lmuparser -lstdc++ -lm -fopenmp -Wall
 mpiexec -n 2 ./main "../test/input1" 3000 100 0.95 0.0001 4
 ```
 

@@ -51,11 +51,11 @@ int main(int argc, char** argv){
     readFile(argv[1], bounds, function);
 
     int rank, size;
-    int L = std::stoi(argv[2]);
-    int numStartingPoints = std::stoi(argv[6]);
-    double T = std::stod(argv[3]);
+    int const L = std::stoi(argv[2]);
+    int const numStartingPoints = std::stoi(argv[6]);
+    double const T = std::stod(argv[3]);
     double alpha = std::stod(argv[4]);
-    double tol = std::stod(argv[5]);
+    double const tol = std::stod(argv[5]);
     
     if(alpha < 0.8 || alpha > 0.99){ alpha = 0.95; }
     
@@ -74,12 +74,12 @@ int main(int argc, char** argv){
     if(rank == 0){
         std::cout << "Point found: (";
         for (int j = 0; j < domain.getDimensions(); ++j){
-            std::cout << SA.getSolution().at(j);
+            std::cout << SA.getBestSolution().at(j);
             if(j < domain.getDimensions() -1)
                 std::cout << ", ";
         }
         std::cout << ")"<<std::endl;
-        std::cout << "F(x) = " << SA.getFSolution() << std::endl;
+        std::cout << "F(x) = " << SA.getBestFSolution() << std::endl;
         std::cout << "Elapsed time: " << elapsed_seconds.count() << " s" << std::endl;
     }
 
