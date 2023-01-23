@@ -22,7 +22,6 @@ void readFile(const std::string& filename, domainBounds& bounds, std::string& fu
     if(dimensions < 1) std::exit(-1);
     
     if(dimensions > 0){
-        bounds.reserve(dimensions);
         bounds.resize(dimensions);  
 
         for (int i = 0; i < dimensions; ++i) {

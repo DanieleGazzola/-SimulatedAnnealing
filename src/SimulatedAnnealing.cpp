@@ -39,7 +39,7 @@ void SimulatedAnnealing::findMinimum(Domain const & domain, std::vector<double> 
 //Manages data exchange between different MPI processes
 void SimulatedAnnealing::exchangeData(int const & dimensions){ 
     std::vector<double> tempSol;
-    tempSol.resize(dimensions);
+    tempSol.reserve(dimensions);
     double tempFSol;
     int rank, size;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
