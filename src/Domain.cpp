@@ -41,22 +41,27 @@ std::vector<double> Domain::generateStepsize() const{
 }
 
 //Returns a new point, generated starting from the one provided as a parameter by moving it by a maximum length contained in the stepsize
-std::vector<double> Domain::generateNewPoint(std::vector<double>& currentPoint, std::vector<double>& stepsize) const{
+std::vector<double> Domain::generateNewPoint(std::vector<double> const & currentPoint, std::vector<double> const & stepsize) const{
     std::vector<double> newPoint;
-    newPoint.reserve(dimensions);
-    double shrinkingFactor = randomUnitary() * 2 - 1;
+    newPoint.resize(dimensions);
+    double shrinkingFactor = randomUnitary();
 
     for (int i = 0; i < dimensions; ++i){
-        double newCoordinate = currentPoint[i] + stepsize[i]*shrinkingFactor;
-
-        if(newCoordinate < bounds[i].first){
-            newPoint.emplace_back(bounds[i].first);
-        }       
-        else if(newCoordinate > bounds[i].second){
-            newPoint.emplace_back(bounds[i].second);
+        if(randomUnitary() < 0.5){
+            if((currentPoint[i] + stepsize[i]*shrinkingFactor) <= bounds[i].second){
+                newPoint[i] = (currentPoint[i] + stepsize[i]*shrinkingFactor);
+            }
+            else{
+                newPoint[i] = bounds[i].second;
+            }
         }
-        else {
-            newPoint.emplace_back((currentPoint[i] + stepsize[i]*shrinkingFactor));
+        else{
+            if((currentPoint[i] - stepsize[i]*shrinkingFactor) >= bounds[i].first){
+                newPoint[i] = (currentPoint[i] - stepsize[i]*shrinkingFactor );
+            }
+            else{
+                newPoint[i] = bounds[i].first;
+            }
         }
     }
 

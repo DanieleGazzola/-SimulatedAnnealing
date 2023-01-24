@@ -73,12 +73,12 @@ int main(int argc, char** argv){
     if(rank == 0){
         std::cout << "Point found: (";
         for (int j = 0; j < domain.getDimensions(); ++j){
-            std::cout << SA.getBestSolution().at(j);
+            std::cout << SA.getSolution().at(j);
             if(j < domain.getDimensions() -1)
                 std::cout << ", ";
         }
         std::cout << ")"<<std::endl;
-        std::cout << "F(x) = " << SA.getBestFSolution() << std::endl;
+        std::cout << "F(x) = " << SA.getFSolution() << std::endl;
         std::cout << "Elapsed time: " << elapsed_seconds.count() << " s" << std::endl;
     }
 

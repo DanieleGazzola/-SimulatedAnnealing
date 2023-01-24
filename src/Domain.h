@@ -25,7 +25,7 @@ class Domain {
         std::vector<double> generateStepsize() const;
 
         //Returns a new point, generated starting from the one provided as a parameter by moving it by a maximum length contained in the stepsize
-        std::vector<double> generateNewPoint(std::vector<double>& currentPoint, std::vector<double>& stepsize) const;
+        std::vector<double> generateNewPoint(std::vector<double> const & currentPoint, std::vector<double> const & stepsize) const;
         
     private:
         int dimensions;

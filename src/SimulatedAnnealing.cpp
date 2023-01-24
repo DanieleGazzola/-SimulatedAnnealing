@@ -12,21 +12,21 @@ void SimulatedAnnealing::setNewPoint(int const & domainDimension, std::vector<do
 //Perform the sequential annealing:
 //External loop deals with the temperature
 //Internal loop deals with the number of iterations at each temperature
-void SimulatedAnnealing::findMinimum(Domain const & domain, std::vector<double> & solution, double & fSolution){
-    double fNew, tempFSolution{fSolution}, temp{T};
-    std::vector<double> newPoint, tempSol = solution;
+void SimulatedAnnealing::findMinimum(Domain const & domain, std::vector<double> & currentSolution, double & currentFSolution){
+    double fNew, tempFSolution{currentFSolution}, temp{T};
+    std::vector<double> newPoint, tempSol = currentSolution;
     newPoint.resize(domain.getDimensions());
-    setNewPoint(domain.getDimensions(), newPoint);
 
     while(temp > tol){
         for (int i = 0; i < L; ++i) {
-            newPoint = domain.generateNewPoint(tempSol, stepsize);         
+            newPoint = domain.generateNewPoint(tempSol, stepsize);
+            setNewPoint(domain.getDimensions(), newPoint);
             fNew = parser.Eval();
 
             if(fNew < tempFSolution || std::exp((tempFSolution - fNew) / temp) > domain.randomUnitary()){
-                if(fNew < fSolution){
-                    solution = newPoint;
-                    fSolution = fNew;
+                if(fNew < currentFSolution){
+                    currentSolution = newPoint;
+                    currentFSolution = fNew;
                 }
                 tempSol = newPoint;
                 tempFSolution = fNew;
@@ -39,7 +39,7 @@ void SimulatedAnnealing::findMinimum(Domain const & domain, std::vector<double> 
 //Manages data exchange between different MPI processes
 void SimulatedAnnealing::exchangeData(int const & dimensions){ 
     std::vector<double> tempSol;
-    tempSol.reserve(dimensions);
+    tempSol.resize(dimensions);
     double tempFSol;
     int rank, size;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -50,15 +50,15 @@ void SimulatedAnnealing::exchangeData(int const & dimensions){
             MPI_Recv(tempSol.data(), dimensions, MPI_DOUBLE, i, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
             MPI_Recv(&tempFSol, 1, MPI_DOUBLE, i, 3, MPI_COMM_WORLD, MPI_STATUS_IGNORE); 
 
-            if(tempFSol < bestFSolution){
-                bestFSolution = tempFSol;
-                bestSolution = tempSol;
+            if(tempFSol < fSolution){
+                fSolution = tempFSol;
+                solution = tempSol;
             }
         }
     }
     else{
-        MPI_Send(bestSolution.data(), dimensions, MPI_DOUBLE, 0, 2, MPI_COMM_WORLD);
-        MPI_Send(&bestFSolution, 1, MPI_DOUBLE, 0, 3, MPI_COMM_WORLD);
+        MPI_Send(solution.data(), dimensions, MPI_DOUBLE, 0, 2, MPI_COMM_WORLD);
+        MPI_Send(&fSolution, 1, MPI_DOUBLE, 0, 3, MPI_COMM_WORLD);
     }   
 }
 
@@ -69,26 +69,26 @@ void SimulatedAnnealing::simulatedAnnealing(Domain const & domain, std::string c
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     int numCurrentPoint = rank;
 
-    std::vector<double> solution;
-    double fSolution;
+    std::vector<double> tempSolution;
+    double tempFSolution;
 
     while(numCurrentPoint < numStartingPoints){
-        solution = domain.generateInitialSolution();
+        tempSolution = domain.generateInitialSolution();
         stepsize = domain.generateStepsize();
 
         parser.SetExpr(function);
-        setNewPoint(dimensions, solution);
-        fSolution = parser.Eval();
-        findMinimum(domain, solution, fSolution);
+        setNewPoint(dimensions, tempSolution);
+        tempFSolution = parser.Eval();
+        findMinimum(domain, tempSolution, tempFSolution);
 
         if (numCurrentPoint == rank){
-            bestFSolution = fSolution;
-            bestSolution = solution;
+            fSolution = tempFSolution;
+            solution = tempSolution;
         }
         else{
-            if (bestFSolution > fSolution){
-                bestFSolution = fSolution;
-                bestSolution = solution;
+            if (fSolution > tempFSolution){
+                fSolution = tempFSolution;
+                solution = tempSolution;
             }
         }
 
